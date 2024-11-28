@@ -5,8 +5,7 @@ class Program
     public static void Main()
     {
         var tokensParser = new TokensParser();
-        string text =  "леее jkjkj[программирование][ggffgfg]gbg ипипии\n" +
-                       "[ggffgfg]: https://www.google.com";
+        string text =  "_текст _текст_ текст_ текст_";
 
         var md = new MarkdownConverter(tokensParser);
         string htmlContent = md.ConvertToHtml(text);

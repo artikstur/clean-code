@@ -26,7 +26,10 @@ public class UserConfiguration: IEntityTypeConfiguration<UserEntity>
             .HasForeignKey(d => d.AuthorId)
             .OnDelete(DeleteBehavior.Cascade); 
 
-        builder.HasMany(u => u.AllowedDocuments)
-            .WithMany(d => d.AllowedUsers);
+        builder.HasMany(u => u.AllowedToEditDocuments)
+            .WithMany(d => d.AllowedToEditUsers);
+        
+        builder.HasMany(u => u.AllowedToReadDocuments)
+            .WithMany(d => d.AllowedToReadUsers);
     }
 }

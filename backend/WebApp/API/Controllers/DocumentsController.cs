@@ -1,4 +1,4 @@
-using API.Contracts.Responses;
+using API.Contracts.Requests;
 using Application.Interfaces.Services;
 using Application.Services;
 using Application.Utils;
@@ -64,15 +64,15 @@ public class DocumentsController : ControllerBase
             return Unauthorized();
         }
 
-        var getResult = await _documentsService.Get(userId, documentId);
+        var documentResult = await _documentsService.Get(userId, documentId);
 
-        return !getResult.IsSuccess
-            ? _errorResponseFactory.CreateResponse(getResult.Error)
-            : Ok(Envelope.Ok(getResult.Value));
+        return !documentResult.IsSuccess
+            ? _errorResponseFactory.CreateResponse(documentResult.Error)
+            : Ok(Envelope.Ok(documentResult.Value));
     }
 
     [HttpPut("{documentId:guid}/update-content")]
-    public async Task<IActionResult> UpdateDocumentContent(Guid documentId, [FromBody] string newContent)
+    public async Task<IActionResult> UpdateDocumentContent(Guid documentId)
     {
         var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
 
@@ -81,7 +81,7 @@ public class DocumentsController : ControllerBase
             return Unauthorized();
         }
 
-        var updateResult = await _documentsService.Update(userId, documentId, newContent);
+        var updateResult = await _documentsService.Update(userId, documentId);
 
         return !updateResult.IsSuccess
             ? _errorResponseFactory.CreateResponse(updateResult.Error)
@@ -105,41 +105,7 @@ public class DocumentsController : ControllerBase
             : Ok(Envelope.Ok());
     }
 
-    [HttpPost("add-editor")]
-    public async Task<IActionResult> AddEditorToDocument([FromQuery] Guid documentId, [FromQuery] Guid newUserId)
-    {
-        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(userIdClaim, out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var result = await _documentsService.AddUserAsEditor(userId, documentId, newUserId);
-
-        return !result.IsSuccess
-            ? _errorResponseFactory.CreateResponse(result.Error)
-            : Ok(Envelope.Ok());
-    }
-
-    [HttpPost("remove-editor")]
-    public async Task<IActionResult> RemoveEditorFromDocument([FromQuery] Guid documentId, [FromQuery] Guid oldUserId)
-    {
-        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(userIdClaim, out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var result = await _documentsService.RemoveUserFromEditors(userId, documentId, oldUserId);
-
-        return !result.IsSuccess
-            ? _errorResponseFactory.CreateResponse(result.Error)
-            : Ok(Envelope.Ok());
-    }
-
-    [HttpGet("{documentId}/editors")]
+    [HttpGet("{documentId:guid}/editors")]
     public async Task<IActionResult> GetAllEditors(Guid documentId)
     {
         var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
@@ -153,10 +119,76 @@ public class DocumentsController : ControllerBase
 
         return !result.IsSuccess
             ? _errorResponseFactory.CreateResponse(result.Error)
-            : Ok(Envelope.Ok(new GetAllEditorsResponse(
-                result.Value.Select(u => new GetAllEditorsResponseDto()
-                {
-                    UserName = u.UserName,
-                }).ToList())));
+            : Ok(Envelope.Ok(result.Value));
+    }
+
+    [HttpGet("{documentId:guid}/readers")]
+    public async Task<IActionResult> GetAllReaders(Guid documentId)
+    {
+        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
+
+        if (!Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await _documentsService.GetAllReaders(userId, documentId);
+
+        return !result.IsSuccess
+            ? _errorResponseFactory.CreateResponse(result.Error)
+            : Ok(Envelope.Ok(result.Value));
+    }
+
+    [HttpPost("{documentId:guid}/set-permissions")]
+    public async Task<IActionResult> SetDocumentPermissions(Guid documentId,
+        [FromForm] SetDocumentPermissionsRequest request)
+    {
+        var ownerIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
+
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId))
+        {
+            return Unauthorized();
+        }
+
+        var setRoleResult =
+            await _documentsService.SetUserPermission(ownerId, request.DocumentRole, documentId, request.UserId);
+
+        return !setRoleResult.IsSuccess
+            ? _errorResponseFactory.CreateResponse(setRoleResult.Error)
+            : Ok(Envelope.Ok());
+    }
+
+    [HttpGet("{documentId:guid}/get-user-role")]
+    public async Task<IActionResult> GetUserRole(Guid documentId, [FromBody] Guid userId)
+    {
+        var ownerIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
+
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId))
+        {
+            return Unauthorized();
+        }
+
+        var userPermissionsResult = await _documentsService.GetUserRole(ownerId, documentId, userId);
+
+        return !userPermissionsResult.IsSuccess
+            ? _errorResponseFactory.CreateResponse(userPermissionsResult.Error)
+            : Ok(Envelope.Ok(userPermissionsResult.Value.ToString()));
+    }
+    
+    [HttpGet("{documentId:guid}/users")]
+    public async Task<IActionResult> GetDocumentUsers(Guid documentId)
+    {
+        var ownerIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
+
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId))
+        {
+            return Unauthorized();
+        }
+
+        var userPermissionsResult = await _documentsService.GetAllUsers(ownerId, documentId);
+
+        return !userPermissionsResult.IsSuccess
+            ? _errorResponseFactory.CreateResponse(userPermissionsResult.Error)
+            : Ok(Envelope.Ok(userPermissionsResult.Value));
     }
 }

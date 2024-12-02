@@ -45,6 +45,7 @@ services.AddScoped<IDocumentsRepository, DocumentsRepository>();
 
 services.AddScoped<IUsersService, UsersService>();
 services.AddScoped<IDocumentsService, DocumentsService>();
+services.AddScoped<IMdService, MdService>();
 
 services.AddScoped<ErrorResponseFactory>();
 services.AddAutoMapper(typeof(DataBaseMappings));

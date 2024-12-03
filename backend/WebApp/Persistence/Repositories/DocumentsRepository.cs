@@ -18,14 +18,14 @@ public class DocumentsRepository : IDocumentsRepository
         _dbContext = dbContext;
     }
 
-    public async Task<Result> Create(Guid userId, string name)
+    public async Task<Result<Guid>> Create(Guid userId, string name)
     {
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (userEntity is null)
         {
-            return Result.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
+            return Result<Guid>.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
         }
 
         var documentEntity = new DocumentEntity()
@@ -42,7 +42,7 @@ public class DocumentsRepository : IDocumentsRepository
         await _dbContext.Documents.AddAsync(documentEntity);
         await _dbContext.SaveChangesAsync();
 
-        return Result.Success();
+        return Result<Guid>.Success(documentEntity.DocumentId);
     }
 
     public async Task<Result> Rename(Guid userId, Guid documentId, string name)

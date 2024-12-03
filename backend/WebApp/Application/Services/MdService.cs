@@ -1,7 +1,6 @@
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utils;
-using Core.Enums;
 
 namespace Application.Services;
 

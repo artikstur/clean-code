@@ -26,7 +26,7 @@ services.AddEndpointsApiExplorer();
 services.AddSwaggerGen();
 
 services.Configure<JwtOptions>(configuration.GetSection(nameof(JwtOptions)));
-services.Configure<MinioService>(configuration.GetSection("Minio"));
+services.Configure<MinIoRequirement>(configuration.GetSection("Minio"));
 services.Configure<AuthorizationOptions>(configuration.GetSection(nameof(AuthorizationOptions)));
 services.AddApiAuthentication(configuration);
 
@@ -50,6 +50,8 @@ services.AddScoped<IMdService, MdService>();
 services.AddScoped<ErrorResponseFactory>();
 services.AddAutoMapper(typeof(DataBaseMappings));
 
+services.AddSingleton<MinioService>();
+
 services.AddValidators();
 
 var app = builder.Build();
@@ -68,4 +70,6 @@ app.MapControllers();
 
 app.Run();
 
-public partial class Program { }
+public partial class Program
+{
+}

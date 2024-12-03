@@ -4,25 +4,49 @@ using Application.Interfaces.Services;
 using Application.Utils;
 using Core.Enums;
 using Core.Models;
+using Microsoft.Extensions.Options;
 
 namespace Application.Services;
 
 public class DocumentsService : IDocumentsService
 {
     private readonly IDocumentsRepository _documentsRepository;
+    private readonly MinioService _minioService;
+    private readonly MinIoRequirement _minioConfig;
 
-    public DocumentsService(IDocumentsRepository documentsRepository)
+    public DocumentsService(IDocumentsRepository documentsRepository, MinioService minioService,
+        IOptions<MinIoRequirement> minIoOptions)
     {
         _documentsRepository = documentsRepository;
+        _minioService = minioService;
+        _minioConfig = minIoOptions.Value;
     }
 
-    public async Task<Result> Create(Guid userId, string name) 
+    public async Task<Result> Create(Guid userId, string name)
     {
         var createResult = await _documentsRepository.Create(userId, name);
+        
+        if (!createResult.IsSuccess)
+        {
+            return Result.Failure(createResult.Error);
+        }
+        
+        var fileName = $"{createResult.Value}.txt";
+        var fileContent = $"This is a document for {name}";
 
-        return createResult.IsSuccess
-            ? Result.Success()
-            : Result.Failure(createResult.Error);
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(fileContent));
+
+        try
+        {
+            await _minioService.UploadFileAsync(_minioConfig.Endpoint, fileName, stream, "text/plain");
+        }
+        catch (Exception e)
+        {
+            await _documentsRepository.Delete(userId, createResult.Value);
+            return Result.Failure(new Error(e.Message, ErrorType.ServerError));
+        }
+
+        return Result.Success();
     }
 
     public async Task<Result> SetUserPermission(Guid ownerId, DocumentRole documentRole, Guid documentId, Guid userId)

@@ -7,7 +7,7 @@ namespace Application.Interfaces.Repositories;
 
 public interface IDocumentsRepository
 {
-    Task<Result> Create(Guid userId, string name);
+    Task<Result<Guid>> Create(Guid userId, string name);
     Task<Result> Rename(Guid userId, Guid documentId, string name);
     Task<Result<Document>> Get(Guid userId, Guid documentId);
     Task<Result> Update(Guid userId, Guid documentId);

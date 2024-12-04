@@ -38,7 +38,7 @@ public class DocumentsService : IDocumentsService
 
         try
         {
-            await _minioService.UploadFileAsync(_minioConfig.Endpoint, fileName, stream, "text/plain");
+            await _minioService.UploadFileAsync(_minioConfig.BucketName, fileName, stream, "text/plain");
         }
         catch (Exception e)
         {

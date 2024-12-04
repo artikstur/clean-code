@@ -40,4 +40,35 @@ public class MinioService
                 .WithContentType(contentType)
         );
     }
+    
+    public async Task<string> GetFileContentAsync(string bucketName, Guid documentId)
+    {
+        var objectName = $"{documentId}.txt"; 
+        
+        var objectExists = await _minioClient.StatObjectAsync(
+            new StatObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName)
+        );
+
+        if (objectExists is null)
+        {
+            throw new Exception("Файл не найден.");
+        }
+
+        using var memoryStream = new MemoryStream();
+        
+        await _minioClient.GetObjectAsync(
+            new GetObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName)
+                .WithCallbackStream(stream => stream.CopyTo(memoryStream))
+        );
+            
+        memoryStream.Seek(0, SeekOrigin.Begin);
+
+        using var reader = new StreamReader(memoryStream);
+        
+        return await reader.ReadToEndAsync();
+    }
 }

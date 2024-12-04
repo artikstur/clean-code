@@ -5,6 +5,7 @@ using Application.Utils;
 using Core.Enums;
 using Core.Models;
 using Microsoft.Extensions.Options;
+using Exception = System.Exception;
 
 namespace Application.Services;
 
@@ -25,12 +26,12 @@ public class DocumentsService : IDocumentsService
     public async Task<Result> Create(Guid userId, string name)
     {
         var createResult = await _documentsRepository.Create(userId, name);
-        
+
         if (!createResult.IsSuccess)
         {
             return Result.Failure(createResult.Error);
         }
-        
+
         var fileName = $"{createResult.Value}.txt";
         var fileContent = $"This is a document for {name}";
 
@@ -118,22 +119,24 @@ public class DocumentsService : IDocumentsService
             : Result<DocumentRole>.Failure(userRoleResult.Error);
     }
 
-    public async Task<Result> Update(Guid userId, Guid documentId)
-    {
-        var updateResult = await _documentsRepository.Update(userId, documentId);
-
-        return updateResult.IsSuccess
-            ? Result.Success()
-            : Result.Failure(updateResult.Error);
-    }
-
     public async Task<Result> Delete(Guid userId, Guid documentId)
     {
         var deleteResult = await _documentsRepository.Delete(userId, documentId);
 
-        return deleteResult.IsSuccess
-            ? Result.Success()
-            : Result.Failure(deleteResult.Error);
+        if (!deleteResult.IsSuccess)
+        {
+            Result.Failure(deleteResult.Error);
+        }
+
+        try
+        {
+            await _minioService.DeleteFileAsync(_minioConfig.BucketName, deleteResult.Value);
+            return Result.Success();
+        }
+        catch (Exception e)
+        {
+            return Result.Failure(new Error(e.Message, ErrorType.ServerError));
+        }
     }
 
     public async Task<Result> Download(Guid userId, Guid documentId)

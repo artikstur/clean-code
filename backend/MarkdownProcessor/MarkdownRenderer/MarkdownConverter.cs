@@ -97,7 +97,9 @@ public class MarkdownConverter : IMarkdownConverter
             }
         }
 
-        return sb.ToString().Trim();
+        string md = sb.ToString().Trim();
+        sb.Clear();
+        return md;
     }
 
     private string GetHtmlTag(TagType tagType, bool isOpening)

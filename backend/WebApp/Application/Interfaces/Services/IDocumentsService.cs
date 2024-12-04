@@ -15,7 +15,6 @@ public interface IDocumentsService
     Task<Result> Rename(Guid userId, Guid documentId, string name);
     Task<Result<Document>> Get(Guid userId, Guid documentId);
     Task<Result<DocumentRole>> GetUserRole(Guid ownerId, Guid documentId, Guid userId);
-    Task<Result> Update(Guid userId, Guid documentId);
     Task<Result> Delete(Guid ownerId, Guid documentId);
     Task<Result> Download(Guid userId, Guid documentId);
 }

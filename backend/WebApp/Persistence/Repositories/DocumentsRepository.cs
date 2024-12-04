@@ -103,7 +103,7 @@ public class DocumentsRepository : IDocumentsRepository
     }
 
 
-    // Не забыть сделать поддержку LastModifiedAt
+    // сделать поддержку LastModifiedAt
     public async Task<Result> Update(Guid userId, Guid documentId)
     {
         var userEntity = await _dbContext.Users
@@ -117,14 +117,14 @@ public class DocumentsRepository : IDocumentsRepository
         throw new NotImplementedException();
     }
 
-    public async Task<Result> Delete(Guid userId, Guid documentId)
+    public async Task<Result<string>> Delete(Guid userId, Guid documentId)
     {
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (userEntity is null)
         {
-            return Result.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
+            return Result<string>.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
         }
 
         var documentEntity = await _dbContext.Documents
@@ -132,18 +132,18 @@ public class DocumentsRepository : IDocumentsRepository
 
         if (documentEntity is null)
         {
-            return Result.Failure(new Error("Документ не найден", ErrorType.NotFound));
+            return Result<string>.Failure(new Error("Документ не найден", ErrorType.NotFound));
         }
 
         if (documentEntity.AuthorId != userId)
         {
-            return Result.Failure(new Error("У вас недостаточно прав", ErrorType.AuthorizationError));
+            return Result<string>.Failure(new Error("У вас недостаточно прав", ErrorType.AuthorizationError));
         }
 
         _dbContext.Documents.Remove(documentEntity);
         await _dbContext.SaveChangesAsync();
 
-        return Result.Success();
+        return Result<string>.Success(documentEntity.Name);
     }
 
     public async Task<Result<ICollection<User>>> GetAllEditors(Guid userId, Guid documentId)

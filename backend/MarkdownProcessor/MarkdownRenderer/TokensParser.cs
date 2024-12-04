@@ -16,7 +16,7 @@ public class TokensParser : ITokensParser
 
         foreach (var linkLine in lines.Where(_linkReferenceHandler.IsReferenceStyleLink))
         {
-            _linkReferenceHandler.HandleReferenceStyleLink(linkLine); 
+            _linkReferenceHandler.HandleReferenceStyleLink(linkLine);
         }
 
         foreach (var line in lines.Where(line => !_linkReferenceHandler.IsReferenceStyleLink(line)))
@@ -39,7 +39,10 @@ public class TokensParser : ITokensParser
             _tagPositionsStack.Clear();
         }
 
-        return _tokens;
+        var tokens = new List<Token>(_tokens); 
+        _tagPositionsStack.Clear();
+        _tokens.Clear();
+        return tokens; 
     }
 
     private void HandleHeaderTag()
@@ -200,7 +203,8 @@ public class TokensParser : ITokensParser
     private bool IsMatchingOpenTag(TagPosition tagPosition, TagType tagType, string word)
     {
         return (tagPosition.TagType == tagType && tagPosition.TagState == TagState.TemporarilyOpen) ||
-               (tagPosition.TagType == tagType && tagPosition.TagState == TagState.TemporarilyOpenInWord && tagPosition.Content == word);
+               (tagPosition.TagType == tagType && tagPosition.TagState == TagState.TemporarilyOpenInWord &&
+                tagPosition.Content == word);
     }
 
     private TagPosition? FindMatchingOpenTag(TagType tagType, string word, Stack<TagPosition> tempStack)
@@ -222,7 +226,8 @@ public class TokensParser : ITokensParser
         return matchingOpenTag;
     }
 
-    private TagPosition? RestoreAndValidateTags(TagPosition? matchingOpenTag, TagType tagType, Stack<TagPosition> tempStack, int tagIndex, string word)
+    private TagPosition? RestoreAndValidateTags(TagPosition? matchingOpenTag, TagType tagType,
+        Stack<TagPosition> tempStack, int tagIndex, string word)
     {
         var tagsInRange = new HashSet<TagPosition>();
         TagPosition? intersectTag = null;
@@ -249,7 +254,8 @@ public class TokensParser : ITokensParser
         return newTag;
     }
 
-    private void ValidateIntersectionRule(HashSet<TagPosition> tagsInRange, TagPosition? intersectTag, TagPosition matchingOpenTag, TagPosition newTag)
+    private void ValidateIntersectionRule(HashSet<TagPosition> tagsInRange, TagPosition? intersectTag,
+        TagPosition matchingOpenTag, TagPosition newTag)
     {
         if (intersectTag != null && !(tagsInRange.Contains(intersectTag.TagPair!)))
         {
@@ -271,7 +277,8 @@ public class TokensParser : ITokensParser
         return tagPosition;
     }
 
-    private TagPosition? GetEnclosedTagInBoldAndItalic(TagType tagType, TagPosition currentTag, TagPosition? matchingOpenTag)
+    private TagPosition? GetEnclosedTagInBoldAndItalic(TagType tagType, TagPosition currentTag,
+        TagPosition? matchingOpenTag)
     {
         if (tagType == TagType.ItalicTag
             && currentTag is { TagType: TagType.BoldTag, TagState: TagState.Close }

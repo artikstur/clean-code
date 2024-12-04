@@ -40,11 +40,11 @@ public class MinioService
                 .WithContentType(contentType)
         );
     }
-    
+
     public async Task<string> GetFileContentAsync(string bucketName, Guid documentId)
     {
-        var objectName = $"{documentId}.txt"; 
-        
+        var objectName = $"{documentId}.txt";
+
         var objectExists = await _minioClient.StatObjectAsync(
             new StatObjectArgs()
                 .WithBucket(bucketName)
@@ -57,18 +57,73 @@ public class MinioService
         }
 
         using var memoryStream = new MemoryStream();
-        
+
         await _minioClient.GetObjectAsync(
             new GetObjectArgs()
                 .WithBucket(bucketName)
                 .WithObject(objectName)
                 .WithCallbackStream(stream => stream.CopyTo(memoryStream))
         );
-            
+
         memoryStream.Seek(0, SeekOrigin.Begin);
 
         using var reader = new StreamReader(memoryStream);
-        
+
         return await reader.ReadToEndAsync();
+    }
+
+    public async Task OverwriteFileContentAsync(string bucketName, Guid documentId, string newContent)
+    {
+        var objectName = $"{documentId}.txt";
+
+        var objectExists = await _minioClient.StatObjectAsync(
+            new StatObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName)
+        );
+
+        if (objectExists is null)
+        {
+            throw new Exception("Файл не найден.");
+        }
+
+        using var memoryStream = new MemoryStream();
+
+        await using (var writer = new StreamWriter(memoryStream, leaveOpen: true))
+        {
+            await writer.WriteAsync(newContent);
+            await writer.FlushAsync();
+        }
+
+        memoryStream.Seek(0, SeekOrigin.Begin);
+
+        await _minioClient.PutObjectAsync(
+            new PutObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName)
+                .WithStreamData(memoryStream)
+                .WithObjectSize(memoryStream.Length)
+                .WithContentType("text/plain")
+        );
+    }
+
+    public async Task DeleteFileAsync(string bucketName, string fileName)
+    {
+        var objectExists = await _minioClient.StatObjectAsync(
+            new StatObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(fileName)
+        );
+
+        if (objectExists is null)
+        {
+            throw new Exception("Файл не найден.");
+        }
+        
+        await _minioClient.RemoveObjectAsync(
+            new RemoveObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(fileName)
+        );
     }
 }

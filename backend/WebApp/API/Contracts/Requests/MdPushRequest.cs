@@ -1,3 +1,3 @@
 namespace API.Contracts.Requests;
 
-public record MdPushRequest(Guid UserId, string NewContent, Guid DocumentId);
+public record MdPushRequest(string NewContent, Guid DocumentId);

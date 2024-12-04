@@ -52,6 +52,8 @@ services.AddAutoMapper(typeof(DataBaseMappings));
 
 services.AddSingleton<MinioService>();
 
+services.AddMdProcessor();
+
 services.AddValidators();
 
 var app = builder.Build();

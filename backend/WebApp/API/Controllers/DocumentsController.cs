@@ -71,23 +71,6 @@ public class DocumentsController : ControllerBase
             : Ok(Envelope.Ok(documentResult.Value));
     }
 
-    [HttpPut("{documentId:guid}/update-content")]
-    public async Task<IActionResult> UpdateDocumentContent(Guid documentId)
-    {
-        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(userIdClaim, out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var updateResult = await _documentsService.Update(userId, documentId);
-
-        return !updateResult.IsSuccess
-            ? _errorResponseFactory.CreateResponse(updateResult.Error)
-            : Ok(Envelope.Ok());
-    }
-
     [HttpDelete("{documentId:guid}")]
     public async Task<IActionResult> DeleteDocument(Guid documentId)
     {

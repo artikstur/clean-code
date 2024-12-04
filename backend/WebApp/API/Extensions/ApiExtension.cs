@@ -6,6 +6,8 @@ using Application.Services;
 using Core.Enums;
 using FluentValidation;
 using Infrastructure.Auth;
+using MarkdownRenderer;
+using MarkdownRenderer.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -66,5 +68,11 @@ public static class ApiExtensions
     public static void AddValidators(this IServiceCollection services)
     {
         services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
+    }
+    
+    public static void AddMdProcessor(this IServiceCollection services)
+    {
+        services.AddSingleton<ITokensParser, TokensParser>();
+        services.AddSingleton<IMarkdownConverter, MarkdownConverter>();
     }
 }

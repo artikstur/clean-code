@@ -20,7 +20,7 @@ public class DocumentsController : ControllerBase
         _errorResponseFactory = errorResponseFactory;
         _documentsService = documentsService;
     }
-    
+
     [HttpPost("create")]
     public async Task<IActionResult> CreateDocument([FromQuery] string name)
     {
@@ -37,10 +37,10 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(createResult.Error)
             : Ok(Envelope.Ok());
     }
-    
-    
+
+
     [ServiceFilter(typeof(DocumentExistsFilter))]
-    [ServiceFilter(typeof(ValidateDocumentEditorsFilter))]
+    [ServiceFilter(typeof(ValidateAuthorOrEditorFilter))]
     [HttpPut("{documentId:guid}/rename")]
     public async Task<IActionResult> RenameDocument(Guid documentId, [FromQuery] string newName)
     {
@@ -57,7 +57,7 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(renameResult.Error)
             : Ok(Envelope.Ok());
     }
-    
+
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}")]
@@ -76,7 +76,7 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(documentResult.Error)
             : Ok(Envelope.Ok(documentResult.Value));
     }
-    
+
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpDelete("{documentId:guid}")]
@@ -95,7 +95,7 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(deleteResult.Error)
             : Ok(Envelope.Ok());
     }
-    
+
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}/editors")]
@@ -114,7 +114,7 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(result.Error)
             : Ok(Envelope.Ok(result.Value));
     }
-    
+
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}/readers")]
@@ -133,7 +133,7 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(result.Error)
             : Ok(Envelope.Ok(result.Value));
     }
-    
+
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpPost("{documentId:guid}/set-permissions")]
@@ -173,7 +173,7 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(userPermissionsResult.Error)
             : Ok(Envelope.Ok(userPermissionsResult.Value.ToString()));
     }
-    
+
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}/users")]
@@ -191,5 +191,26 @@ public class DocumentsController : ControllerBase
         return !userPermissionsResult.IsSuccess
             ? _errorResponseFactory.CreateResponse(userPermissionsResult.Error)
             : Ok(Envelope.Ok(userPermissionsResult.Value));
+    }
+
+    [ServiceFilter(typeof(DocumentExistsFilter))]
+    [ServiceFilter(typeof(ValidateAuthorOrReaderFilter))]
+    [HttpGet("{documentId:guid}/download")]
+    public async Task<IActionResult> GenerateDownloadLink(Guid documentId)
+    {
+        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
+
+        if (!Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var downloadUrl = await _documentsService.GetDownloadUrl(userId, documentId);
+
+        return Ok(new
+        {
+            Success = true,
+            Link = downloadUrl
+        });
     }
 }

@@ -119,11 +119,35 @@ public class MinioService
         {
             throw new Exception("Файл не найден.");
         }
-        
+
         await _minioClient.RemoveObjectAsync(
             new RemoveObjectArgs()
                 .WithBucket(bucketName)
                 .WithObject(fileName)
         );
+    }
+
+    public async Task<string> GenerateDownloadLinkAsync(string bucketName, string fileName,
+        int expirationInSeconds = 3600)
+    {
+        var objectExists = await _minioClient.StatObjectAsync(
+            new StatObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(fileName)
+        );
+
+        if (objectExists is null)
+        {
+            throw new Exception("Файл не найден.");
+        }
+
+        var presignedUrl = await _minioClient.PresignedGetObjectAsync(
+            new PresignedGetObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(fileName)
+                .WithExpiry(expirationInSeconds)
+        );
+
+        return presignedUrl;
     }
 }

@@ -139,8 +139,17 @@ public class DocumentsService : IDocumentsService
         }
     }
 
-    public async Task<Result> Download(Guid userId, Guid documentId)
+    public async Task<Result<string>> GetDownloadUrl(Guid userId, Guid documentId)
     {
-        throw new NotImplementedException();
+        var documentName = $"{documentId}.txt";
+        try
+        {
+            var url = await _minioService.GenerateDownloadLinkAsync(_minioConfig.BucketName, documentName);
+            return Result<string>.Success(url);
+        }
+        catch (Exception e)
+        {
+            return Result<string>.Failure(new Error(e.Message, ErrorType.ServerError));
+        }
     }
 }

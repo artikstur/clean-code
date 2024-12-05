@@ -16,5 +16,5 @@ public interface IDocumentsService
     Task<Result<Document>> Get(Guid userId, Guid documentId);
     Task<Result<DocumentRole>> GetUserRole(Guid ownerId, Guid documentId, Guid userId);
     Task<Result> Delete(Guid ownerId, Guid documentId);
-    Task<Result> Download(Guid userId, Guid documentId);
+    Task<Result<string>> GetDownloadUrl(Guid userId, Guid documentId);
 }

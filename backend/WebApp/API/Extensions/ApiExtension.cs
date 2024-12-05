@@ -59,11 +59,9 @@ public static class ApiExtensions
     public static void AddAuthorizationPolicy(this IServiceCollection services, string policyName,
         Permission[] permissions)
     {
-        services.AddAuthorization(options =>
-        {
-            options.AddPolicy(policyName, policy =>
+        services.AddAuthorizationBuilder()
+            .AddPolicy(policyName, policy =>
                 policy.Requirements.Add(new PermissionRequirement(permissions)));
-        });
     }
 
     public static void AddValidators(this IServiceCollection services)
@@ -83,5 +81,7 @@ public static class ApiExtensions
         services.AddScoped<DocumentExistsFilter>();
         services.AddScoped<ValidateDocumentEditorsFilter>();
         services.AddScoped<ValidateDocumentReadersFilter>();
+        services.AddScoped<ValidateAuthorOrEditorFilter>();
+        services.AddScoped<ValidateAuthorOrReaderFilter>();
     }
 }

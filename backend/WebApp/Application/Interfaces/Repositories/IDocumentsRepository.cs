@@ -19,6 +19,4 @@ public interface IDocumentsRepository
     Task<Result> AddUserAsReader(Guid ownerId, Guid documentId, Guid userId);
     Task<Result> ClearUserPermissions(Guid ownerId, Guid documentId, Guid userId);
     Task<Result<DocumentRole>> GetUserRole(Guid ownerId, Guid documentId, Guid userId);
-    Task<Result<bool>> CheckAccessToRead(Guid userId, Guid documentId);
-    Task<Result<bool>> CheckAccessToEdit(Guid userId, Guid documentId);
 }

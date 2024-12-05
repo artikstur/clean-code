@@ -7,6 +7,7 @@ namespace Application.Interfaces.Services;
 public interface IUsersService
 {
     Task<Result<List<User>>> GetAllUsers();
+    Task<Result<bool>> ExistById(Guid userId);
     Task<Result<HashSet<Permission>>> GetPermissionsByUserId(Guid userId);
     Task<Result<string>> Login(string email, string password);
     Task<Result> Register(string userName, string email, string password);

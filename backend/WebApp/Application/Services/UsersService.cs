@@ -7,11 +7,12 @@ using Core.Models;
 
 namespace Application.Services;
 
-public class UsersService: IUsersService
+public class UsersService : IUsersService
 {
     private readonly IPasswordHasher _passwordHasher;
     private readonly IUsersRepository _usersRepository;
     private readonly IJwtProvider _jwtProvider;
+
     public UsersService(
         IUsersRepository usersRepository,
         IPasswordHasher passwordHasher,
@@ -21,18 +22,32 @@ public class UsersService: IUsersService
         _usersRepository = usersRepository;
         _jwtProvider = jwtProvider;
     }
+
     public async Task<Result<List<User>>> GetAllUsers()
     {
         var usersResult = await _usersRepository.GetAllUsers();
 
-        return !usersResult.IsSuccess ? Result<List<User>>.Failure(usersResult.Error) : Result<List<User>>.Success(usersResult.Value);
+        return !usersResult.IsSuccess
+            ? Result<List<User>>.Failure(usersResult.Error)
+            : Result<List<User>>.Success(usersResult.Value);
+    }
+
+    public async Task<Result<bool>> ExistById(Guid userId)
+    {
+        var existResult = await _usersRepository.Exist(userId);
+
+        return !existResult.IsSuccess 
+            ? Result<bool>.Failure(existResult.Error)
+            : Result<bool>.Success(existResult.Value);
     }
 
     public async Task<Result<HashSet<Permission>>> GetPermissionsByUserId(Guid userId)
     {
         var permissionsResult = await _usersRepository.GetUserPermissions(userId);
 
-        return !permissionsResult.IsSuccess ? Result<HashSet<Permission>>.Failure(permissionsResult.Error) : Result<HashSet<Permission>>.Success(permissionsResult.Value);
+        return !permissionsResult.IsSuccess
+            ? Result<HashSet<Permission>>.Failure(permissionsResult.Error)
+            : Result<HashSet<Permission>>.Success(permissionsResult.Value);
     }
 
     public async Task<Result<string>> Login(string email, string password)
@@ -83,7 +98,7 @@ public class UsersService: IUsersService
     public async Task<Result<HashSet<Role>>> GetUserRolesByUserId(Guid userId)
     {
         var userRolesResult = await _usersRepository.GetUserRoles(userId);
-        
+
         return !userRolesResult.IsSuccess ? Result<HashSet<Role>>.Failure(userRolesResult.Error) : userRolesResult;
     }
 

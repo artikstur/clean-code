@@ -42,6 +42,15 @@ public class UsersRepository : IUsersRepository
         return Result.Success();
     }
 
+    public async Task<Result<bool>> Exist(Guid userId)
+    {
+        var userEntity = await _dbContext.Users.FindAsync(userId);
+
+        return userEntity is null
+            ? Result<bool>.Failure(new Error("Пользователь не найден", ErrorType.NotFound))
+            : Result<bool>.Success(true);
+    }
+
     public async Task<Result<User>> GetById(Guid userId)
     {
         var userEntity = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);

@@ -1,4 +1,5 @@
 using API.Contracts.Requests;
+using API.Filters;
 using Application.Interfaces.Services;
 using Application.Services;
 using Application.Utils;
@@ -20,6 +21,8 @@ public class MdController : ControllerBase
         _mdService = mdService;
     }
 
+    [ServiceFilter(typeof(DocumentExistsFilter))]
+    [ServiceFilter(typeof(ValidateDocumentEditorsFilter))]
     [HttpPost("push")]
     public async Task<IActionResult> Push([FromBody] MdPushRequest request)
     {
@@ -29,7 +32,7 @@ public class MdController : ControllerBase
         {
             return Unauthorized();
         }
-        
+
         var pushResult = await _mdService.Push(userId, request.NewContent, request.DocumentId);
 
         return pushResult.IsSuccess
@@ -37,6 +40,8 @@ public class MdController : ControllerBase
             : _errorResponseFactory.CreateResponse(pushResult.Error);
     }
 
+    [ServiceFilter(typeof(DocumentExistsFilter))]
+    [ServiceFilter(typeof(ValidateDocumentReadersFilter))]
     [HttpGet("pull")]
     public async Task<IActionResult> Pull([FromQuery] MdPullRequest request)
     {
@@ -46,20 +51,20 @@ public class MdController : ControllerBase
         {
             return Unauthorized();
         }
-        
+
         var pullResult = await _mdService.Pull(userId, request.DocumentId);
 
         return pullResult.IsSuccess
             ? Ok(Envelope.Ok(pullResult.Value))
             : _errorResponseFactory.CreateResponse(pullResult.Error);
     }
-    
+
     [HttpPost("html")]
-    [Consumes("text/plain")]  
+    [Consumes("text/plain")]
     public async Task<IActionResult> GetHtml([FromBody] string rawMarkdown)
     {
         var htmlResult = await _mdService.GetHtml(rawMarkdown);
-    
+
         return htmlResult.IsSuccess
             ? Ok(Envelope.Ok(htmlResult.Value))
             : _errorResponseFactory.CreateResponse(htmlResult.Error);

@@ -1,5 +1,6 @@
 using System.Text;
 using API.Contracts.Requests;
+using API.Filters;
 using API.Validation;
 using Application.Interfaces.Auth;
 using Application.Services;
@@ -24,7 +25,7 @@ public static class ApiExtensions
         services.Configure<JwtOptions>(configuration.GetSection(nameof(JwtOptions)));
 
         var jwtOptions = configuration.GetSection(nameof(JwtOptions)).Get<JwtOptions>();
-        
+
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
             {
@@ -64,15 +65,23 @@ public static class ApiExtensions
                 policy.Requirements.Add(new PermissionRequirement(permissions)));
         });
     }
-    
+
     public static void AddValidators(this IServiceCollection services)
     {
         services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
     }
-    
+
     public static void AddMdProcessor(this IServiceCollection services)
     {
         services.AddSingleton<ITokensParser, TokensParser>();
         services.AddSingleton<IMarkdownConverter, MarkdownConverter>();
+    }
+
+    public static void AddFilters(this IServiceCollection services)
+    {
+        services.AddScoped<ValidateDocumentAuthorFilter>();
+        services.AddScoped<DocumentExistsFilter>();
+        services.AddScoped<ValidateDocumentEditorsFilter>();
+        services.AddScoped<ValidateDocumentReadersFilter>();
     }
 }

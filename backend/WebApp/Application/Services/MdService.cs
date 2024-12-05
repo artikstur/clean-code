@@ -11,13 +11,11 @@ public class MdService : IMdService
 {
     private readonly MinioService _minioService;
     private readonly MinIoRequirement _minioConfig;
-    private readonly IDocumentsRepository _documentsRepository;
     private readonly IMarkdownConverter _markdownConverter;
 
-    public MdService(IDocumentsRepository documentsRepository, MinioService minioService,
+    public MdService(MinioService minioService,
         IOptions<MinIoRequirement> minIoOptions, IMarkdownConverter markdownConverter)
     {
-        _documentsRepository = documentsRepository;
         _minioService = minioService;
         _minioConfig = minIoOptions.Value;
         _markdownConverter = markdownConverter;
@@ -25,13 +23,6 @@ public class MdService : IMdService
 
     public async Task<Result> Push(Guid userId, string newContent, Guid documentId)
     {
-        var accessResult = await _documentsRepository.CheckAccessToEdit(userId, documentId);
-
-        if (!accessResult.IsSuccess)
-        {
-            return Result.Failure(accessResult.Error);
-        }
-
         try
         {
             await _minioService.OverwriteFileContentAsync(_minioConfig.BucketName, documentId, newContent);
@@ -45,13 +36,6 @@ public class MdService : IMdService
 
     public async Task<Result<string>> Pull(Guid userId, Guid documentId)
     {
-        var accessResult = await _documentsRepository.CheckAccessToRead(userId, documentId);
-
-        if (!accessResult.IsSuccess)
-        {
-            return Result<string>.Failure(accessResult.Error);
-        }
-
         try
         {
             var fileData = await _minioService.GetFileContentAsync(_minioConfig.BucketName, documentId);

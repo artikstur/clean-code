@@ -42,10 +42,12 @@ services.AddScoped<IPasswordHasher, PasswordHasher>();
 
 services.AddScoped<IUsersRepository, UsersRepository>();
 services.AddScoped<IDocumentsRepository, DocumentsRepository>();
+services.AddScoped<IDocumentsAccessRepository, DocumentsAccessRepository>();
 
 services.AddScoped<IUsersService, UsersService>();
 services.AddScoped<IDocumentsService, DocumentsService>();
 services.AddScoped<IMdService, MdService>();
+services.AddScoped<IDocumentsAccessService, DocumentsAccessService>();
 
 services.AddScoped<ErrorResponseFactory>();
 services.AddAutoMapper(typeof(DataBaseMappings));
@@ -55,6 +57,8 @@ services.AddSingleton<MinioService>();
 services.AddMdProcessor();
 
 services.AddValidators();
+
+services.AddFilters();
 
 var app = builder.Build();
 

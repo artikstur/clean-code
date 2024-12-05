@@ -7,6 +7,7 @@ namespace Application.Interfaces.Repositories;
 public interface IUsersRepository
 {
     Task<Result> Add(User user);
+    Task<Result<bool>> Exist(Guid userId);
     Task<Result<User>> GetById(Guid userId);
     Task<Result<User>> GetByEmail(string email);
     Task<Result<List<User>>> GetAllUsers();

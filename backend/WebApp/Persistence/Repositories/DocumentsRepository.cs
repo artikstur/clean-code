@@ -23,16 +23,11 @@ public class DocumentsRepository : IDocumentsRepository
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == userId);
 
-        if (userEntity is null)
-        {
-            return Result<Guid>.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
-        }
-
         var documentEntity = new DocumentEntity()
         {
             DocumentId = Guid.NewGuid(),
             AuthorId = userId,
-            Author = userEntity,
+            Author = userEntity!,
             AllowedToEditUsers = new List<UserEntity>(),
             Name = name,
             LastModifiedAt = DateTime.UtcNow,
@@ -50,50 +45,29 @@ public class DocumentsRepository : IDocumentsRepository
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == userId);
 
-        if (userEntity is null)
-        {
-            return Result.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
-        }
-
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToEditUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
 
-        if (documentEntity is null)
-        {
-            return Result.Failure(new Error("Документ не найден", ErrorType.NotFound));
-        }
+        if (!documentEntity!.AllowedToEditUsers.Contains(userEntity!) && documentEntity.AuthorId != userId)
+            return Result.Failure(new Error("У вас недостаточно прав", ErrorType.AuthorizationError));
+        
+        documentEntity.Name = name;
+        await _dbContext.SaveChangesAsync();
+        return Result.Success();
 
-        if (documentEntity.AllowedToEditUsers.Contains(userEntity) || documentEntity.AuthorId == userId)
-        {
-            documentEntity.Name = name;
-            await _dbContext.SaveChangesAsync();
-            return Result.Success();
-        }
-
-        return Result.Failure(new Error("У вас недостаточно прав", ErrorType.AuthorizationError));
     }
 
     public async Task<Result<Document>> Get(Guid userId, Guid documentId)
     {
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (userEntity is null)
-        {
-            return Result<Document>.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
-        }
-
+        
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToReadUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
-
-        if (documentEntity is null)
-        {
-            return Result<Document>.Failure(new Error("Документ не найден", ErrorType.NotFound));
-        }
-
-        if (documentEntity.AllowedToReadUsers.Contains(userEntity) || documentEntity.AuthorId == userId)
+        
+        if (documentEntity!.AllowedToReadUsers.Contains(userEntity!) || documentEntity.AuthorId == userId)
         {
             return Result<Document>.Success(Document.Create(documentEntity.DocumentId, documentEntity.AuthorId,
                 documentEntity.Name, documentEntity.CreatedAt, documentEntity.LastModifiedAt));
@@ -108,12 +82,7 @@ public class DocumentsRepository : IDocumentsRepository
     {
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (userEntity is null)
-        {
-            return Result.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
-        }
-
+        
         throw new NotImplementedException();
     }
 
@@ -121,29 +90,14 @@ public class DocumentsRepository : IDocumentsRepository
     {
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (userEntity is null)
-        {
-            return Result<string>.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
-        }
-
+        
         var documentEntity = await _dbContext.Documents
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
 
-        if (documentEntity is null)
-        {
-            return Result<string>.Failure(new Error("Документ не найден", ErrorType.NotFound));
-        }
-
-        if (documentEntity.AuthorId != userId)
-        {
-            return Result<string>.Failure(new Error("У вас недостаточно прав", ErrorType.AuthorizationError));
-        }
-
-        _dbContext.Documents.Remove(documentEntity);
+        _dbContext.Documents.Remove(documentEntity!);
         await _dbContext.SaveChangesAsync();
 
-        return Result<string>.Success(documentEntity.Name);
+        return Result<string>.Success(documentEntity!.Name);
     }
 
     public async Task<Result<ICollection<User>>> GetAllEditors(Guid userId, Guid documentId)
@@ -152,12 +106,7 @@ public class DocumentsRepository : IDocumentsRepository
             .Include(d => d.AllowedToEditUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
 
-        if (documentEntity is null)
-        {
-            return Result<ICollection<User>>.Failure(new Error("Документ не найден", ErrorType.NotFound));
-        }
-
-        if (documentEntity.AuthorId != userId)
+        if (documentEntity!.AuthorId != userId)
         {
             return Result<ICollection<User>>.Failure(new Error("У вас недостаточно прав",
                 ErrorType.AuthorizationError));
@@ -172,13 +121,8 @@ public class DocumentsRepository : IDocumentsRepository
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToReadUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
-
-        if (documentEntity is null)
-        {
-            return Result<ICollection<User>>.Failure(new Error("Документ не найден", ErrorType.NotFound));
-        }
-
-        if (documentEntity.AuthorId != userId)
+        
+        if (documentEntity!.AuthorId != userId)
         {
             return Result<ICollection<User>>.Failure(new Error("У вас недостаточно прав",
                 ErrorType.AuthorizationError));
@@ -195,13 +139,7 @@ public class DocumentsRepository : IDocumentsRepository
             .Include(d => d.AllowedToEditUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
 
-        if (documentEntity is null)
-        {
-            return Result<ICollection<UserWithDocumentRoleDto>>.Failure(
-                new Error("Документ не найден", ErrorType.NotFound));
-        }
-
-        if (documentEntity.AuthorId != ownerId)
+        if (documentEntity!.AuthorId != ownerId)
         {
             return Result<ICollection<UserWithDocumentRoleDto>>.Failure(
                 new Error("У вас недостаточно прав", ErrorType.AuthorizationError));
@@ -225,37 +163,27 @@ public class DocumentsRepository : IDocumentsRepository
 
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == newUserId);
-
-        if (adminEntity is null || userEntity is null)
-        {
-            return Result.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
-        }
-
+        
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToEditUsers)
             .Include(documentEntity => documentEntity.AllowedToReadUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
 
-        if (documentEntity is null)
-        {
-            return Result.Failure(new Error("Документ не найден", ErrorType.NotFound));
-        }
-
-        if (documentEntity.AuthorId != ownerId)
+        if (documentEntity!.AuthorId != ownerId)
         {
             return Result.Failure(new Error("У вас недостаточно прав", ErrorType.AuthorizationError));
         }
 
-        if (documentEntity.AllowedToEditUsers.Contains(userEntity))
+        if (documentEntity.AllowedToEditUsers.Contains(userEntity!))
         {
             return Result.Success();
         }
 
-        documentEntity.AllowedToEditUsers.Add(userEntity);
+        documentEntity.AllowedToEditUsers.Add(userEntity!);
 
-        if (!documentEntity.AllowedToReadUsers.Contains(userEntity))
+        if (!documentEntity.AllowedToReadUsers.Contains(userEntity!))
         {
-            documentEntity.AllowedToReadUsers.Add(userEntity);
+            documentEntity.AllowedToReadUsers.Add(userEntity!);
         }
 
         await _dbContext.SaveChangesAsync();
@@ -270,35 +198,25 @@ public class DocumentsRepository : IDocumentsRepository
 
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == newUserId);
-
-        if (adminEntity is null || userEntity is null)
-        {
-            return Result.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
-        }
-
+        
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToReadUsers)
             .Include(d => d.AllowedToEditUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
 
-        if (documentEntity is null)
-        {
-            return Result.Failure(new Error("Документ не найден", ErrorType.NotFound));
-        }
-
-        if (documentEntity.AuthorId != ownerId)
+        if (documentEntity!.AuthorId != ownerId)
         {
             return Result.Failure(new Error("У вас недостаточно прав", ErrorType.AuthorizationError));
         }
 
-        documentEntity.AllowedToEditUsers.Remove(userEntity);
+        documentEntity.AllowedToEditUsers.Remove(userEntity!);
 
-        if (documentEntity.AllowedToReadUsers.Contains(userEntity))
+        if (documentEntity.AllowedToReadUsers.Contains(userEntity!))
         {
             return Result.Success();
         }
 
-        documentEntity.AllowedToReadUsers.Add(userEntity);
+        documentEntity.AllowedToReadUsers.Add(userEntity!);
         await _dbContext.SaveChangesAsync();
 
         return Result.Success();
@@ -312,28 +230,18 @@ public class DocumentsRepository : IDocumentsRepository
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == userId);
 
-        if (adminEntity is null || userEntity is null)
-        {
-            return Result.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
-        }
-
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToReadUsers)
             .Include(d => d.AllowedToEditUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
 
-        if (documentEntity is null)
-        {
-            return Result.Failure(new Error("Документ не найден", ErrorType.NotFound));
-        }
-
-        if (documentEntity.AuthorId != ownerId)
+        if (documentEntity!.AuthorId != ownerId)
         {
             return Result.Failure(new Error("У вас недостаточно прав", ErrorType.AuthorizationError));
         }
 
-        documentEntity.AllowedToEditUsers.Remove(userEntity);
-        documentEntity.AllowedToReadUsers.Remove(userEntity);
+        documentEntity.AllowedToEditUsers.Remove(userEntity!);
+        documentEntity.AllowedToReadUsers.Remove(userEntity!);
 
         return Result.Success();
     }
@@ -345,75 +253,27 @@ public class DocumentsRepository : IDocumentsRepository
 
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (adminEntity is null || userEntity is null)
-        {
-            return Result<DocumentRole>.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
-        }
-
+        
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToReadUsers)
             .Include(d => d.AllowedToEditUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
-
-        if (documentEntity is null)
-        {
-            return Result<DocumentRole>.Failure(new Error("Документ не найден", ErrorType.NotFound));
-        }
-
-        if (documentEntity.AuthorId != ownerId)
+        
+        if (documentEntity!.AuthorId != ownerId)
         {
             return Result<DocumentRole>.Failure(new Error("У вас недостаточно прав", ErrorType.AuthorizationError));
         }
 
-        if (documentEntity.AllowedToEditUsers.Contains(userEntity))
+        if (documentEntity.AllowedToEditUsers.Contains(userEntity!))
         {
             return Result<DocumentRole>.Success(DocumentRole.Editor);
         }
 
-        if (documentEntity.AllowedToReadUsers.Contains(userEntity))
+        if (documentEntity.AllowedToReadUsers.Contains(userEntity!))
         {
             return Result<DocumentRole>.Success(DocumentRole.Reader);
         }
 
         return Result<DocumentRole>.Success(DocumentRole.NoAccess);
-    }
-
-    public async Task<Result<bool>> CheckAccessToRead(Guid userId, Guid documentId)
-    {
-        var userEntity = await _dbContext.Users
-            .FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (userEntity is null)
-        {
-            return Result<bool>.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
-        }
-
-        var documentEntity = await _dbContext.Documents
-            .Include(d => d.AllowedToReadUsers)
-            .FirstOrDefaultAsync(d => d.DocumentId == documentId);
-
-        return documentEntity is null
-            ? Result<bool>.Failure(new Error("Документ не найден", ErrorType.NotFound))
-            : Result<bool>.Success(documentEntity.AllowedToReadUsers.Contains(userEntity));
-    }
-
-    public async Task<Result<bool>> CheckAccessToEdit(Guid userId, Guid documentId)
-    {
-        var userEntity = await _dbContext.Users
-            .FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (userEntity is null)
-        {
-            return Result<bool>.Failure(new Error("Пользователь не найден", ErrorType.NotFound));
-        }
-
-        var documentEntity = await _dbContext.Documents
-            .Include(d => d.AllowedToEditUsers)
-            .FirstOrDefaultAsync(d => d.DocumentId == documentId);
-
-        return documentEntity is null
-            ? Result<bool>.Failure(new Error("Документ не найден", ErrorType.NotFound))
-            : Result<bool>.Success(documentEntity.AllowedToEditUsers.Contains(userEntity));
     }
 }

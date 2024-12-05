@@ -1,4 +1,5 @@
 using API.Contracts.Requests;
+using API.Filters;
 using Application.Interfaces.Services;
 using Application.Services;
 using Application.Utils;
@@ -19,7 +20,7 @@ public class DocumentsController : ControllerBase
         _errorResponseFactory = errorResponseFactory;
         _documentsService = documentsService;
     }
-
+    
     [HttpPost("create")]
     public async Task<IActionResult> CreateDocument([FromQuery] string name)
     {
@@ -36,7 +37,10 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(createResult.Error)
             : Ok(Envelope.Ok());
     }
-
+    
+    
+    [ServiceFilter(typeof(DocumentExistsFilter))]
+    [ServiceFilter(typeof(ValidateDocumentEditorsFilter))]
     [HttpPut("{documentId:guid}/rename")]
     public async Task<IActionResult> RenameDocument(Guid documentId, [FromQuery] string newName)
     {
@@ -53,7 +57,9 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(renameResult.Error)
             : Ok(Envelope.Ok());
     }
-
+    
+    [ServiceFilter(typeof(DocumentExistsFilter))]
+    [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}")]
     public async Task<IActionResult> GetDocument(Guid documentId)
     {
@@ -70,7 +76,9 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(documentResult.Error)
             : Ok(Envelope.Ok(documentResult.Value));
     }
-
+    
+    [ServiceFilter(typeof(DocumentExistsFilter))]
+    [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpDelete("{documentId:guid}")]
     public async Task<IActionResult> DeleteDocument(Guid documentId)
     {
@@ -87,7 +95,9 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(deleteResult.Error)
             : Ok(Envelope.Ok());
     }
-
+    
+    [ServiceFilter(typeof(DocumentExistsFilter))]
+    [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}/editors")]
     public async Task<IActionResult> GetAllEditors(Guid documentId)
     {
@@ -104,7 +114,9 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(result.Error)
             : Ok(Envelope.Ok(result.Value));
     }
-
+    
+    [ServiceFilter(typeof(DocumentExistsFilter))]
+    [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}/readers")]
     public async Task<IActionResult> GetAllReaders(Guid documentId)
     {
@@ -121,7 +133,9 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(result.Error)
             : Ok(Envelope.Ok(result.Value));
     }
-
+    
+    [ServiceFilter(typeof(DocumentExistsFilter))]
+    [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpPost("{documentId:guid}/set-permissions")]
     public async Task<IActionResult> SetDocumentPermissions(Guid documentId,
         [FromForm] SetDocumentPermissionsRequest request)
@@ -141,6 +155,8 @@ public class DocumentsController : ControllerBase
             : Ok(Envelope.Ok());
     }
 
+    [ServiceFilter(typeof(DocumentExistsFilter))]
+    [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}/get-user-role")]
     public async Task<IActionResult> GetUserRole(Guid documentId, [FromBody] Guid userId)
     {
@@ -158,6 +174,8 @@ public class DocumentsController : ControllerBase
             : Ok(Envelope.Ok(userPermissionsResult.Value.ToString()));
     }
     
+    [ServiceFilter(typeof(DocumentExistsFilter))]
+    [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}/users")]
     public async Task<IActionResult> GetDocumentUsers(Guid documentId)
     {

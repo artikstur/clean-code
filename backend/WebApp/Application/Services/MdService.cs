@@ -21,7 +21,7 @@ public class MdService : IMdService
         _markdownConverter = markdownConverter;
     }
 
-    public async Task<Result> Push(Guid userId, string newContent, Guid documentId)
+    public async Task<Result> Push(string newContent, Guid documentId)
     {
         try
         {
@@ -34,7 +34,7 @@ public class MdService : IMdService
         }
     }
 
-    public async Task<Result<string>> Pull(Guid userId, Guid documentId)
+    public async Task<Result<string>> Pull(Guid documentId)
     {
         try
         {

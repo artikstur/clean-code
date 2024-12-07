@@ -8,15 +8,14 @@ namespace Application.Interfaces.Repositories;
 public interface IDocumentsRepository
 {
     Task<Result<Guid>> Create(Guid userId, string name);
-    Task<Result> Rename(Guid userId, Guid documentId, string name);
-    Task<Result<Document>> Get(Guid userId, Guid documentId);
-    Task<Result> Update(Guid userId, Guid documentId);
-    Task<Result<string>> Delete(Guid userId, Guid documentId);
-    Task<Result<ICollection<User>>> GetAllEditors(Guid ownerId, Guid documentId);
-    Task<Result<ICollection<User>>> GetAllReaders(Guid ownerId, Guid documentId);
-    Task<Result<ICollection<UserWithDocumentRoleDto>>> GetAllUsers(Guid ownerId, Guid documentId);
-    Task<Result> AddUserAsEditor(Guid ownerId, Guid documentId, Guid userId);
-    Task<Result> AddUserAsReader(Guid ownerId, Guid documentId, Guid userId);
-    Task<Result> ClearUserPermissions(Guid ownerId, Guid documentId, Guid userId);
-    Task<Result<DocumentRole>> GetUserRole(Guid ownerId, Guid documentId, Guid userId);
+    Task<Result> Rename(Guid documentId, string name);
+    Task<Result<Document>> Get(Guid documentId);
+    Task<Result<string>> Delete(Guid documentId);
+    Task<Result<ICollection<User>>> GetAllEditors(Guid documentId);
+    Task<Result<ICollection<User>>> GetAllReaders(Guid documentId);
+    Task<Result<ICollection<UserWithDocumentRoleDto>>> GetAllUsers(Guid documentId);
+    Task<Result> AddUserAsEditor(Guid documentId, Guid userId);
+    Task<Result> AddUserAsReader(Guid documentId, Guid userId);
+    Task<Result> ClearUserPermissions(Guid documentId, Guid userId);
+    Task<Result<DocumentRole>> GetUserRole(Guid documentId, Guid userId);
 }

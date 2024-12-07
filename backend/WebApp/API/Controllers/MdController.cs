@@ -26,14 +26,7 @@ public class MdController : ControllerBase
     [HttpPost("push")]
     public async Task<IActionResult> Push([FromBody] MdPushRequest request)
     {
-        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(userIdClaim, out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var pushResult = await _mdService.Push(userId, request.NewContent, request.DocumentId);
+        var pushResult = await _mdService.Push(request.NewContent, request.DocumentId);
 
         return pushResult.IsSuccess
             ? Ok(Envelope.Ok())
@@ -45,14 +38,7 @@ public class MdController : ControllerBase
     [HttpGet("pull")]
     public async Task<IActionResult> Pull([FromQuery] MdPullRequest request)
     {
-        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(userIdClaim, out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var pullResult = await _mdService.Pull(userId, request.DocumentId);
+        var pullResult = await _mdService.Pull(request.DocumentId);
 
         return pullResult.IsSuccess
             ? Ok(Envelope.Ok(pullResult.Value))

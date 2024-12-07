@@ -35,8 +35,6 @@ services.AddDbContext<WebDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString(nameof(WebDbContext)));
 });
 
-services.AddAuthorizationPolicy("RequireAdmin", new[] { Permission.Delete });
-
 services.AddScoped<IJwtProvider, JwtProvider>();
 services.AddScoped<IPasswordHasher, PasswordHasher>();
 

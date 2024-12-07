@@ -2,15 +2,11 @@ using System.Text;
 using API.Contracts.Requests;
 using API.Filters;
 using API.Validation;
-using Application.Interfaces.Auth;
-using Application.Services;
-using Core.Enums;
 using FluentValidation;
 using Infrastructure.Auth;
 using MarkdownRenderer;
 using MarkdownRenderer.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 
 
@@ -49,21 +45,10 @@ public static class ApiExtensions
                     }
                 };
             });
-
-        services.AddScoped<IPermissionService, PermissionService>();
-        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
-
+        
         services.AddAuthorization();
     }
-
-    public static void AddAuthorizationPolicy(this IServiceCollection services, string policyName,
-        Permission[] permissions)
-    {
-        services.AddAuthorizationBuilder()
-            .AddPolicy(policyName, policy =>
-                policy.Requirements.Add(new PermissionRequirement(permissions)));
-    }
-
+    
     public static void AddValidators(this IServiceCollection services)
     {
         services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();

@@ -43,29 +43,29 @@ public class DocumentsService : IDocumentsService
         }
         catch (Exception e)
         {
-            await _documentsRepository.Delete(userId, createResult.Value);
+            await _documentsRepository.Delete(createResult.Value);
             return Result.Failure(new Error(e.Message, ErrorType.ServerError));
         }
 
         return Result.Success();
     }
 
-    public async Task<Result> SetUserPermission(Guid ownerId, DocumentRole documentRole, Guid documentId, Guid userId)
+    public async Task<Result> SetUserPermission(DocumentRole documentRole, Guid documentId, Guid userId)
     {
         Result result = documentRole switch
         {
-            DocumentRole.Editor => await _documentsRepository.AddUserAsEditor(ownerId, documentId, userId),
-            DocumentRole.Reader => await _documentsRepository.AddUserAsReader(ownerId, documentId, userId),
-            DocumentRole.NoAccess => await _documentsRepository.ClearUserPermissions(ownerId, documentId, userId),
+            DocumentRole.Editor => await _documentsRepository.AddUserAsEditor(documentId, userId),
+            DocumentRole.Reader => await _documentsRepository.AddUserAsReader(documentId, userId),
+            DocumentRole.NoAccess => await _documentsRepository.ClearUserPermissions(documentId, userId),
             _ => Result.Failure(new Error("Такой роли не существует", ErrorType.AuthorizationError))
         };
 
         return result;
     }
 
-    public async Task<Result<ICollection<UserUserNameDto>>> GetAllEditors(Guid userId, Guid documentId)
+    public async Task<Result<ICollection<UserUserNameDto>>> GetAllEditors(Guid documentId)
     {
-        var getAllEditorsResult = await _documentsRepository.GetAllEditors(userId, documentId);
+        var getAllEditorsResult = await _documentsRepository.GetAllEditors(documentId);
 
         return getAllEditorsResult.IsSuccess
             ? Result<ICollection<UserUserNameDto>>.Success(getAllEditorsResult.Value
@@ -73,9 +73,9 @@ public class DocumentsService : IDocumentsService
             : Result<ICollection<UserUserNameDto>>.Failure(getAllEditorsResult.Error);
     }
 
-    public async Task<Result<ICollection<UserUserNameDto>>> GetAllReaders(Guid userId, Guid documentId)
+    public async Task<Result<ICollection<UserUserNameDto>>> GetAllReaders(Guid documentId)
     {
-        var getAllReadersResult = await _documentsRepository.GetAllReaders(userId, documentId);
+        var getAllReadersResult = await _documentsRepository.GetAllReaders(documentId);
 
         return getAllReadersResult.IsSuccess
             ? Result<ICollection<UserUserNameDto>>.Success(getAllReadersResult.Value
@@ -83,45 +83,45 @@ public class DocumentsService : IDocumentsService
             : Result<ICollection<UserUserNameDto>>.Failure(getAllReadersResult.Error);
     }
 
-    public async Task<Result<ICollection<UserWithDocumentRoleDto>>> GetAllUsers(Guid ownerId, Guid documentId)
+    public async Task<Result<ICollection<UserWithDocumentRoleDto>>> GetAllUsers(Guid documentId)
     {
-        var allUsersResult = await _documentsRepository.GetAllUsers(ownerId, documentId);
+        var allUsersResult = await _documentsRepository.GetAllUsers(documentId);
 
         return allUsersResult.IsSuccess
             ? Result<ICollection<UserWithDocumentRoleDto>>.Success(allUsersResult.Value)
             : Result<ICollection<UserWithDocumentRoleDto>>.Failure(allUsersResult.Error);
     }
 
-    public async Task<Result> Rename(Guid userId, Guid documentId, string name)
+    public async Task<Result> Rename(Guid documentId, string name)
     {
-        var renameResult = await _documentsRepository.Rename(userId, documentId, name);
+        var renameResult = await _documentsRepository.Rename(documentId, name);
 
         return renameResult.IsSuccess
             ? Result.Success()
             : Result.Failure(renameResult.Error);
     }
 
-    public async Task<Result<Document>> Get(Guid userId, Guid documentId)
+    public async Task<Result<Document>> Get(Guid documentId)
     {
-        var documentResult = await _documentsRepository.Get(userId, documentId);
+        var documentResult = await _documentsRepository.Get(documentId);
 
         return documentResult.IsSuccess
             ? Result<Document>.Success(documentResult.Value)
             : Result<Document>.Failure(documentResult.Error);
     }
 
-    public async Task<Result<DocumentRole>> GetUserRole(Guid ownerId, Guid documentId, Guid userId)
+    public async Task<Result<DocumentRole>> GetUserRole(Guid documentId, Guid userId)
     {
-        var userRoleResult = await _documentsRepository.GetUserRole(ownerId, documentId, userId);
+        var userRoleResult = await _documentsRepository.GetUserRole(documentId, userId);
 
         return userRoleResult.IsSuccess
             ? Result<DocumentRole>.Success(userRoleResult.Value)
             : Result<DocumentRole>.Failure(userRoleResult.Error);
     }
 
-    public async Task<Result> Delete(Guid userId, Guid documentId)
+    public async Task<Result> Delete(Guid documentId)
     {
-        var deleteResult = await _documentsRepository.Delete(userId, documentId);
+        var deleteResult = await _documentsRepository.Delete(documentId);
 
         if (!deleteResult.IsSuccess)
         {
@@ -138,8 +138,8 @@ public class DocumentsService : IDocumentsService
             return Result.Failure(new Error(e.Message, ErrorType.ServerError));
         }
     }
-
-    public async Task<Result<string>> GetDownloadUrl(Guid userId, Guid documentId)
+    
+    public async Task<Result<string>> GetDownloadUrl(Guid documentId)
     {
         var documentName = $"{documentId}.txt";
         try

@@ -45,13 +45,8 @@ public class DocumentsController : ControllerBase
     public async Task<IActionResult> RenameDocument(Guid documentId, [FromQuery] string newName)
     {
         var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(userIdClaim, out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var renameResult = await _documentsService.Rename(userId, documentId, newName);
+        
+        var renameResult = await _documentsService.Rename(documentId, newName);
 
         return !renameResult.IsSuccess
             ? _errorResponseFactory.CreateResponse(renameResult.Error)
@@ -63,14 +58,7 @@ public class DocumentsController : ControllerBase
     [HttpGet("{documentId:guid}")]
     public async Task<IActionResult> GetDocument(Guid documentId)
     {
-        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(userIdClaim, out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var documentResult = await _documentsService.Get(userId, documentId);
+        var documentResult = await _documentsService.Get(documentId);
 
         return !documentResult.IsSuccess
             ? _errorResponseFactory.CreateResponse(documentResult.Error)
@@ -82,14 +70,7 @@ public class DocumentsController : ControllerBase
     [HttpDelete("{documentId:guid}")]
     public async Task<IActionResult> DeleteDocument(Guid documentId)
     {
-        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(userIdClaim, out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var deleteResult = await _documentsService.Delete(userId, documentId);
+        var deleteResult = await _documentsService.Delete(documentId);
 
         return !deleteResult.IsSuccess
             ? _errorResponseFactory.CreateResponse(deleteResult.Error)
@@ -101,14 +82,7 @@ public class DocumentsController : ControllerBase
     [HttpGet("{documentId:guid}/editors")]
     public async Task<IActionResult> GetAllEditors(Guid documentId)
     {
-        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(userIdClaim, out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var result = await _documentsService.GetAllEditors(userId, documentId);
+        var result = await _documentsService.GetAllEditors(documentId);
 
         return !result.IsSuccess
             ? _errorResponseFactory.CreateResponse(result.Error)
@@ -120,14 +94,7 @@ public class DocumentsController : ControllerBase
     [HttpGet("{documentId:guid}/readers")]
     public async Task<IActionResult> GetAllReaders(Guid documentId)
     {
-        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(userIdClaim, out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var result = await _documentsService.GetAllReaders(userId, documentId);
+        var result = await _documentsService.GetAllReaders(documentId);
 
         return !result.IsSuccess
             ? _errorResponseFactory.CreateResponse(result.Error)
@@ -140,15 +107,8 @@ public class DocumentsController : ControllerBase
     public async Task<IActionResult> SetDocumentPermissions(Guid documentId,
         [FromForm] SetDocumentPermissionsRequest request)
     {
-        var ownerIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(ownerIdClaim, out var ownerId))
-        {
-            return Unauthorized();
-        }
-
         var setRoleResult =
-            await _documentsService.SetUserPermission(ownerId, request.DocumentRole, documentId, request.UserId);
+            await _documentsService.SetUserPermission(request.DocumentRole, documentId, request.UserId);
 
         return !setRoleResult.IsSuccess
             ? _errorResponseFactory.CreateResponse(setRoleResult.Error)
@@ -160,14 +120,7 @@ public class DocumentsController : ControllerBase
     [HttpGet("{documentId:guid}/get-user-role")]
     public async Task<IActionResult> GetUserRole(Guid documentId, [FromBody] Guid userId)
     {
-        var ownerIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(ownerIdClaim, out var ownerId))
-        {
-            return Unauthorized();
-        }
-
-        var userPermissionsResult = await _documentsService.GetUserRole(ownerId, documentId, userId);
+        var userPermissionsResult = await _documentsService.GetUserRole(documentId, userId);
 
         return !userPermissionsResult.IsSuccess
             ? _errorResponseFactory.CreateResponse(userPermissionsResult.Error)
@@ -179,14 +132,7 @@ public class DocumentsController : ControllerBase
     [HttpGet("{documentId:guid}/users")]
     public async Task<IActionResult> GetDocumentUsers(Guid documentId)
     {
-        var ownerIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(ownerIdClaim, out var ownerId))
-        {
-            return Unauthorized();
-        }
-
-        var userPermissionsResult = await _documentsService.GetAllUsers(ownerId, documentId);
+        var userPermissionsResult = await _documentsService.GetAllUsers(documentId);
 
         return !userPermissionsResult.IsSuccess
             ? _errorResponseFactory.CreateResponse(userPermissionsResult.Error)
@@ -198,14 +144,7 @@ public class DocumentsController : ControllerBase
     [HttpGet("{documentId:guid}/download")]
     public async Task<IActionResult> GenerateDownloadLink(Guid documentId)
     {
-        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-
-        if (!Guid.TryParse(userIdClaim, out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var downloadUrl = await _documentsService.GetDownloadUrl(userId, documentId);
+        var downloadUrl = await _documentsService.GetDownloadUrl(documentId);
 
         return Ok(new
         {

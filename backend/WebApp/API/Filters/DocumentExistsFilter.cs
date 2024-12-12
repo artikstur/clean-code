@@ -33,6 +33,8 @@ public class DocumentExistsFilter : IAsyncResourceFilter
                     }
                 }
             }
+            
+            // убрать эти элсы
             else if (context.HttpContext.Request.Query.TryGetValue("documentId", out var documentIdQueryValue))
             {
                 if (Guid.TryParse(documentIdQueryValue.ToString(), out var tempDocumentId))
@@ -42,6 +44,9 @@ public class DocumentExistsFilter : IAsyncResourceFilter
                         documentId = tempDocumentId;
                     }
                 }
+                
+                await next();
+                return;
             }
             else
             {
@@ -61,6 +66,7 @@ public class DocumentExistsFilter : IAsyncResourceFilter
                 }
             }
             
+            // добавить в общий блок или атрибут на валидацию параметра 
             if (documentId == Guid.Empty)
             {
                 context.Result = new BadRequestObjectResult(new { Error = "Invalid documentId" });

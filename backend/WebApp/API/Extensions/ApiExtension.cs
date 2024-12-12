@@ -45,10 +45,10 @@ public static class ApiExtensions
                     }
                 };
             });
-        
+
         services.AddAuthorization();
     }
-    
+
     public static void AddValidators(this IServiceCollection services)
     {
         services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
@@ -60,6 +60,7 @@ public static class ApiExtensions
         services.AddSingleton<IMarkdownConverter, MarkdownConverter>();
     }
 
+    // можно использовать НЕ сервис фильтры
     public static void AddFilters(this IServiceCollection services)
     {
         services.AddScoped<ValidateDocumentAuthorFilter>();

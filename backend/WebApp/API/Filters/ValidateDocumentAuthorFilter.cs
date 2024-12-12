@@ -26,6 +26,7 @@ public class ValidateDocumentAuthorFilter : IAsyncResourceFilter
 
         try
         {
+            // переделать в аутх фильтр (считать или заколотить все)
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
             var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == CustomClaims.UserId);
@@ -36,11 +37,13 @@ public class ValidateDocumentAuthorFilter : IAsyncResourceFilter
                 return;
             }
 
+            // можно обработать documentId в другом фильтре
             if (context.HttpContext.Items.TryGetValue("DocumentId", out var documentIdObj) &&
                 Guid.TryParse(documentIdObj?.ToString(), out var documentId) &&
                 await _documentsAccessService.IsAuthor(userId, documentId))
             {
                 await next();
+                return;
             }
 
             context.Result = new BadRequestObjectResult(new { Error = "You are not the author!!!" });

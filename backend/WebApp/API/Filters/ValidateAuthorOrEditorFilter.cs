@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace API.Filters;
 
+// авторизация на политиках
 public class ValidateAuthorOrEditorFilter : IAsyncResourceFilter
 {
     private readonly IDocumentsAccessService _documentsAccessService;

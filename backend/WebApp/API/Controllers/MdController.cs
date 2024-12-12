@@ -46,13 +46,14 @@ public class MdController : ControllerBase
     }
 
     [HttpPost("html")]
-    [Consumes("text/plain")]
-    public async Task<IActionResult> GetHtml([FromBody] string rawMarkdown)
+    // [Consumes("text/plain")]
+    // [Produces("text/plain")]
+    public async Task<IActionResult> GetHtml()
     {
-        var htmlResult = await _mdService.GetHtml(rawMarkdown);
+        var htmlResult = await _mdService.GetHtml(rawMarkdown: "fvffv");
 
         return htmlResult.IsSuccess
-            ? Ok(Envelope.Ok(htmlResult.Value))
+            ? Content(htmlResult.Value)
             : _errorResponseFactory.CreateResponse(htmlResult.Error);
     }
 }

@@ -1,4 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.IO.Pipelines;
+using System.Text;
 using System.Text.Json;
 using API.Contracts.Requests;
 using Application.Interfaces.Repositories;
@@ -8,7 +10,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace API.Filters;
 
-public class DocumentExistsFilter : IAsyncResourceFilter
+public class DocumentExistsFilter : IAsyncAuthorizationFilter
 {
     private readonly IDocumentsAccessService _documentsAccessService;
 
@@ -17,68 +19,59 @@ public class DocumentExistsFilter : IAsyncResourceFilter
         _documentsAccessService = documentsAccessService;
     }
 
-    public async Task OnResourceExecutionAsync(ResourceExecutingContext context, ResourceExecutionDelegate next)
+    public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
-        try
-        {
-            var documentId = Guid.Empty;
-            
-            if (context.HttpContext.Request.RouteValues.TryGetValue("documentId", out var documentIdValue))
-            {
-                if (Guid.TryParse(documentIdValue?.ToString(), out var tempDocumentId))
-                {
-                    if (await _documentsAccessService.ExistById(tempDocumentId))
-                    {
-                        documentId = tempDocumentId;
-                    }
-                }
-            }
-            
-            // убрать эти элсы
-            else if (context.HttpContext.Request.Query.TryGetValue("documentId", out var documentIdQueryValue))
-            {
-                if (Guid.TryParse(documentIdQueryValue.ToString(), out var tempDocumentId))
-                {
-                    if (await _documentsAccessService.ExistById(tempDocumentId))
-                    {
-                        documentId = tempDocumentId;
-                    }
-                }
-                
-                await next();
-                return;
-            }
-            else
-            {
-                using var reader = new StreamReader(context.HttpContext.Request.Body);
-                var body = await reader.ReadToEndAsync();
+        if (context.HttpContext.Request.RouteValues.TryGetValue("documentId", out var documentIdValue) &&
+            await IsDocumentValid(context, documentIdValue?.ToString())) return;
 
-                using var doc = JsonDocument.Parse(body);
-                if (doc.RootElement.TryGetProperty("documentId", out JsonElement documentIdElement))
-                {
-                    if (Guid.TryParse(documentIdElement.ToString(), out var tempDocumentId))
-                    {
-                        if (await _documentsAccessService.ExistById(tempDocumentId))
-                        {
-                            documentId = tempDocumentId;
-                        }
-                    }
-                }
-            }
-            
-            // добавить в общий блок или атрибут на валидацию параметра 
-            if (documentId == Guid.Empty)
-            {
-                context.Result = new BadRequestObjectResult(new { Error = "Invalid documentId" });
-                return;
-            }
-            
-            context.HttpContext.Items["DocumentId"] = documentId;
-            await next();
-        }
-        catch
+        if (context.HttpContext.Request.Query.TryGetValue("documentId", out var documentIdQueryValue) &&
+            await IsDocumentValid(context, documentIdQueryValue.ToString())) return;
+        
+        context.HttpContext.Request.EnableBuffering();
+        var pipeReader = PipeReader.Create(context.HttpContext.Request.Body);
+        var body = await ReadBodyUsingPipeReader(pipeReader);
+        context.HttpContext.Request.Body.Position = 0;
+
+        using var doc = JsonDocument.Parse(body);
+        if (doc.RootElement.TryGetProperty("documentId", out var documentIdElement) &&
+            await IsDocumentValid(context, documentIdElement.ToString()))
         {
-            context.Result = new UnauthorizedResult();
+            return;
         }
+        
+        context.Result = new ForbidResult();
+    }
+
+    private async Task<bool> IsDocumentValid(AuthorizationFilterContext context, string? documentId)
+    {
+        if (!Guid.TryParse(documentId, out var tempDocumentId)) return false;
+        if (!await _documentsAccessService.ExistById(tempDocumentId)) return false;
+
+        context.HttpContext.Items["documentId"] = tempDocumentId;
+        return true;
+    }
+    
+    private async Task<string> ReadBodyUsingPipeReader(PipeReader pipeReader)
+    {
+        var body = new StringBuilder();
+        while (true)
+        {
+            var result = await pipeReader.ReadAsync();
+            var buffer = result.Buffer;
+
+            foreach (var segment in buffer)
+            {
+                body.Append(Encoding.UTF8.GetString(segment.Span));
+            }
+
+            pipeReader.AdvanceTo(buffer.End);
+
+            if (result.IsCompleted)
+            {
+                break;
+            }
+        }
+
+        return body.ToString();
     }
 }

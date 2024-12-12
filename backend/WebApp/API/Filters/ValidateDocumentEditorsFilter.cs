@@ -1,12 +1,10 @@
-using System.IdentityModel.Tokens.Jwt;
 using Application.Interfaces.Services;
-using Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace API.Filters;
 
-public class ValidateDocumentEditorsFilter : IAsyncResourceFilter
+public class ValidateDocumentEditorsFilter : IAsyncAuthorizationFilter
 {
     private readonly IDocumentsAccessService _documentsAccessService;
 
@@ -15,39 +13,18 @@ public class ValidateDocumentEditorsFilter : IAsyncResourceFilter
         _documentsAccessService = documentsAccessService;
     }
 
-    public async Task OnResourceExecutionAsync(ResourceExecutingContext context, ResourceExecutionDelegate next)
+    public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
-        var token = context.HttpContext.Request.Cookies["tasty-cookies"];
-        if (string.IsNullOrEmpty(token))
+        bool isValid = context.HttpContext.Items.TryGetValue("documentId", out var documentIdObj) &&
+                       context.HttpContext.Items.TryGetValue("userId", out var userIdObj) &&
+                       documentIdObj is not null && userIdObj is not null &&
+                       Guid.TryParse(documentIdObj.ToString(), out var documentId) &&
+                       Guid.TryParse(userIdObj.ToString(), out var userId) &&
+                       await _documentsAccessService.CheckAccessToEdit(userId, documentId);
+
+        if (!isValid)
         {
-            context.Result = new UnauthorizedResult();
-            return;
-        }
-
-        try
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
-            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == CustomClaims.UserId);
-
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
-                context.Result = new UnauthorizedResult();
-                return;
-            }
-
-            if (context.HttpContext.Items.TryGetValue("DocumentId", out var documentIdObj) &&
-                Guid.TryParse(documentIdObj?.ToString(), out var documentId) &&
-                await _documentsAccessService.CheckAccessToEdit(userId, documentId))
-            {
-                await next();
-            }
-
-            context.Result = new BadRequestObjectResult(new { Error = "You are not editor" });
-        }
-        catch
-        {
-            context.Result = new UnauthorizedResult();
+            context.Result = new ForbidResult();
         }
     }
 }

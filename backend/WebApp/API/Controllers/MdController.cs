@@ -3,6 +3,7 @@ using API.Filters;
 using Application.Interfaces.Services;
 using Application.Services;
 using Application.Utils;
+using AutoMapper.Configuration.Annotations;
 using Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,9 +21,10 @@ public class MdController : ControllerBase
         _errorResponseFactory = errorResponseFactory;
         _mdService = mdService;
     }
-
+    
+    [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
-    [ServiceFilter(typeof(ValidateAuthorOrEditorFilter))]
+    // [ServiceFilter(typeof(ValidateDocumentEditorsFilter))]
     [HttpPost("push")]
     public async Task<IActionResult> Push([FromBody] MdPushRequest request)
     {
@@ -33,8 +35,9 @@ public class MdController : ControllerBase
             : _errorResponseFactory.CreateResponse(pushResult.Error);
     }
 
+    [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
-    [ServiceFilter(typeof(ValidateAuthorOrReaderFilter))]
+    [ServiceFilter(typeof(ValidateDocumentReadersFilter))]
     [HttpGet("pull")]
     public async Task<IActionResult> Pull([FromQuery] MdPullRequest request)
     {
@@ -44,7 +47,9 @@ public class MdController : ControllerBase
             ? Ok(Envelope.Ok(pullResult.Value))
             : _errorResponseFactory.CreateResponse(pullResult.Error);
     }
-
+    
+    
+    // Не работает. Попробовать через логи.
     [HttpPost("html")]
     // [Consumes("text/plain")]
     // [Produces("text/plain")]

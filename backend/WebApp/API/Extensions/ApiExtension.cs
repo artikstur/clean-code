@@ -59,15 +59,13 @@ public static class ApiExtensions
         services.AddSingleton<ITokensParser, TokensParser>();
         services.AddSingleton<IMarkdownConverter, MarkdownConverter>();
     }
-
-    // можно использовать НЕ сервис фильтры
+    
     public static void AddFilters(this IServiceCollection services)
     {
-        services.AddScoped<ValidateDocumentAuthorFilter>();
         services.AddScoped<DocumentExistsFilter>();
+        services.AddScoped<UserExistsFilter>();
+        services.AddScoped<ValidateDocumentAuthorFilter>();
         services.AddScoped<ValidateDocumentEditorsFilter>();
         services.AddScoped<ValidateDocumentReadersFilter>();
-        services.AddScoped<ValidateAuthorOrEditorFilter>();
-        services.AddScoped<ValidateAuthorOrReaderFilter>();
     }
 }

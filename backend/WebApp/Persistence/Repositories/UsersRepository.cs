@@ -42,15 +42,6 @@ public class UsersRepository : IUsersRepository
         return Result.Success();
     }
 
-    public async Task<Result<bool>> Exist(Guid userId)
-    {
-        var userEntity = await _dbContext.Users.FindAsync(userId);
-
-        return userEntity is null
-            ? Result<bool>.Failure(new Error("Пользователь не найден", ErrorType.NotFound))
-            : Result<bool>.Success(true);
-    }
-
     public async Task<Result<User>> GetById(Guid userId)
     {
         var userEntity = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
@@ -180,5 +171,17 @@ public class UsersRepository : IUsersRepository
         return userEntity is null
             ? Result<User>.Failure(new Error("Пользователь не найден", ErrorType.ServerError))
             : Result<User>.Success(_mapper.Map<User>(userEntity));
+    }
+
+    public async Task<Result<bool>> Exist(Guid userId)
+    {
+        var userEntity = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (userEntity is null)
+        {
+            return Result<bool>.Success(false);
+        }
+
+        return Result<bool>.Success(true);
     }
 }

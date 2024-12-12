@@ -1,3 +1,7 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace API.Contracts.Requests;
 
-public record MdPushRequest(string NewContent, Guid DocumentId);
+public record MdPushRequest(
+    [Required] string NewContent,
+    [Required] Guid DocumentId);

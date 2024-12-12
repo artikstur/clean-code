@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Application.Dtos;
 using Application.Interfaces.Repositories;
 using Application.Utils;
@@ -34,6 +33,9 @@ public class DocumentsRepository : IDocumentsRepository
             CreatedAt = DateTime.UtcNow,
         };
 
+        documentEntity.AllowedToEditUsers.Add(userEntity);
+        documentEntity.AllowedToReadUsers.Add(userEntity);
+        
         await _dbContext.Documents.AddAsync(documentEntity);
         await _dbContext.SaveChangesAsync();
 
@@ -45,7 +47,7 @@ public class DocumentsRepository : IDocumentsRepository
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToEditUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
-        
+
         documentEntity.Name = name;
         await _dbContext.SaveChangesAsync();
         return Result.Success();
@@ -56,11 +58,11 @@ public class DocumentsRepository : IDocumentsRepository
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToReadUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
-        
+
         return Result<Document>.Success(Document.Create(documentEntity.DocumentId, documentEntity.AuthorId,
             documentEntity.Name, documentEntity.CreatedAt, documentEntity.LastModifiedAt));
     }
-    
+
     public async Task<Result<string>> Delete(Guid documentId)
     {
         var documentEntity = await _dbContext.Documents
@@ -77,7 +79,7 @@ public class DocumentsRepository : IDocumentsRepository
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToEditUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
-        
+
         return Result<ICollection<User>>.Success(documentEntity.AllowedToEditUsers
             .Select(u => User.Create(u.Id, u.UserName, u.PasswordHash, u.Email)).ToList());
     }
@@ -98,7 +100,7 @@ public class DocumentsRepository : IDocumentsRepository
             .Include(d => d.AllowedToReadUsers)
             .Include(d => d.AllowedToEditUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
-        
+
         var editUsers = documentEntity.AllowedToEditUsers
             .Select(u => new UserWithDocumentRoleDto(u.UserName, u.Id, DocumentRole.Editor));
 
@@ -114,12 +116,12 @@ public class DocumentsRepository : IDocumentsRepository
     {
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == newUserId);
-        
+
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToEditUsers)
             .Include(documentEntity => documentEntity.AllowedToReadUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
-        
+
         if (documentEntity.AllowedToEditUsers.Contains(userEntity!))
         {
             return Result.Success();
@@ -141,12 +143,12 @@ public class DocumentsRepository : IDocumentsRepository
     {
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == newUserId);
-        
+
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToReadUsers)
             .Include(d => d.AllowedToEditUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
-        
+
         documentEntity.AllowedToEditUsers.Remove(userEntity!);
 
         if (documentEntity.AllowedToReadUsers.Contains(userEntity!))
@@ -169,10 +171,16 @@ public class DocumentsRepository : IDocumentsRepository
             .Include(d => d.AllowedToReadUsers)
             .Include(d => d.AllowedToEditUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
+
+        if (documentEntity.AuthorId == userId)
+        {
+            return Result.Failure(new Error("Недостаточно прав", ErrorType.AuthorizationError));
+        }
         
         documentEntity.AllowedToEditUsers.Remove(userEntity!);
         documentEntity.AllowedToReadUsers.Remove(userEntity!);
-
+        
+        await _dbContext.SaveChangesAsync();
         return Result.Success();
     }
 
@@ -180,12 +188,12 @@ public class DocumentsRepository : IDocumentsRepository
     {
         var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == userId);
-        
+
         var documentEntity = await _dbContext.Documents
             .Include(d => d.AllowedToReadUsers)
             .Include(d => d.AllowedToEditUsers)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
-        
+
         if (documentEntity.AllowedToEditUsers.Contains(userEntity!))
         {
             return Result<DocumentRole>.Success(DocumentRole.Editor);

@@ -37,10 +37,10 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(createResult.Error)
             : Ok(Envelope.Ok());
     }
-
-
+    
+    [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
-    [ServiceFilter(typeof(ValidateAuthorOrEditorFilter))]
+    [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpPut("{documentId:guid}/rename")]
     public async Task<IActionResult> RenameDocument(Guid documentId, [FromQuery] string newName)
     {
@@ -53,6 +53,7 @@ public class DocumentsController : ControllerBase
             : Ok(Envelope.Ok());
     }
 
+    [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}")]
@@ -65,6 +66,7 @@ public class DocumentsController : ControllerBase
             : Ok(Envelope.Ok(documentResult.Value));
     }
 
+    [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpDelete("{documentId:guid}")]
@@ -77,6 +79,7 @@ public class DocumentsController : ControllerBase
             : Ok(Envelope.Ok());
     }
 
+    [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}/editors")]
@@ -89,6 +92,7 @@ public class DocumentsController : ControllerBase
             : Ok(Envelope.Ok(result.Value));
     }
 
+    [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}/readers")]
@@ -101,6 +105,7 @@ public class DocumentsController : ControllerBase
             : Ok(Envelope.Ok(result.Value));
     }
 
+    [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpPost("{documentId:guid}/set-permissions")]
@@ -115,9 +120,10 @@ public class DocumentsController : ControllerBase
             : Ok(Envelope.Ok());
     }
 
+    [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
-    [HttpGet("{documentId:guid}/get-user-role")]
+    [HttpPost("{documentId:guid}/get-user-role")]
     public async Task<IActionResult> GetUserRole(Guid documentId, [FromBody] Guid userId)
     {
         var userPermissionsResult = await _documentsService.GetUserRole(documentId, userId);
@@ -127,6 +133,7 @@ public class DocumentsController : ControllerBase
             : Ok(Envelope.Ok(userPermissionsResult.Value.ToString()));
     }
 
+    [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpGet("{documentId:guid}/users")]
@@ -139,8 +146,9 @@ public class DocumentsController : ControllerBase
             : Ok(Envelope.Ok(userPermissionsResult.Value));
     }
 
+    [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
-    [ServiceFilter(typeof(ValidateAuthorOrReaderFilter))]
+    [ServiceFilter(typeof(ValidateDocumentReadersFilter))]
     [HttpGet("{documentId:guid}/download")]
     public async Task<IActionResult> GenerateDownloadLink(Guid documentId)
     {

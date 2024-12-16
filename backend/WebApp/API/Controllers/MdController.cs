@@ -3,8 +3,6 @@ using API.Filters;
 using Application.Interfaces.Services;
 using Application.Services;
 using Application.Utils;
-using AutoMapper.Configuration.Annotations;
-using Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -48,14 +46,11 @@ public class MdController : ControllerBase
             : _errorResponseFactory.CreateResponse(pullResult.Error);
     }
     
-    
-    // Не работает. Попробовать через логи.
     [HttpPost("html")]
-    // [Consumes("text/plain")]
-    // [Produces("text/plain")]
-    public async Task<IActionResult> GetHtml()
+    [Produces("text/plain")]
+    public async Task<IActionResult> GetHtml([FromBody] string rawMarkdown)
     {
-        var htmlResult = await _mdService.GetHtml(rawMarkdown: "fvffv");
+        var htmlResult = await _mdService.GetHtml(rawMarkdown);
 
         return htmlResult.IsSuccess
             ? Content(htmlResult.Value)

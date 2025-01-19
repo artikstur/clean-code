@@ -14,6 +14,7 @@ public interface IDocumentsService
     Task<Result<ICollection<UserWithDocumentRoleDto>>> GetAllUsers(Guid documentId);
     Task<Result> Rename(Guid documentId, string name);
     Task<Result<Document>> Get(Guid documentId);
+    Task<Result<ICollection<Document>>> GetUserDocuments(Guid userId);
     Task<Result<DocumentRole>> GetUserRole(Guid documentId, Guid userId);
     Task<Result> Delete(Guid documentId);
     Task<Result<string>> GetDownloadUrl(Guid documentId);

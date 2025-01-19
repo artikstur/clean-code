@@ -4,10 +4,12 @@ using Application.Interfaces.Services;
 using Application.Services;
 using Application.Utils;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class MdController : ControllerBase
 {
@@ -19,7 +21,7 @@ public class MdController : ControllerBase
         _errorResponseFactory = errorResponseFactory;
         _mdService = mdService;
     }
-    
+
     [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
     // [ServiceFilter(typeof(ValidateDocumentEditorsFilter))]
@@ -35,7 +37,7 @@ public class MdController : ControllerBase
 
     [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
-    [ServiceFilter(typeof(ValidateDocumentReadersFilter))]
+    // [ServiceFilter(typeof(ValidateDocumentReadersFilter))]
     [HttpGet("pull")]
     public async Task<IActionResult> Pull([FromQuery] MdPullRequest request)
     {
@@ -45,7 +47,7 @@ public class MdController : ControllerBase
             ? Ok(Envelope.Ok(pullResult.Value))
             : _errorResponseFactory.CreateResponse(pullResult.Error);
     }
-    
+
     [HttpPost("html")]
     [Produces("text/plain")]
     public async Task<IActionResult> GetHtml([FromBody] string rawMarkdown)

@@ -11,6 +11,7 @@ public interface IDocumentsRepository
     Task<Result> Rename(Guid documentId, string name);
     Task<Result<Document>> Get(Guid documentId);
     Task<Result<string>> Delete(Guid documentId);
+    Task<Result<ICollection<Document>>> GetUserDocuments(Guid userId);
     Task<Result<ICollection<User>>> GetAllEditors(Guid documentId);
     Task<Result<ICollection<User>>> GetAllReaders(Guid documentId);
     Task<Result<ICollection<UserWithDocumentRoleDto>>> GetAllUsers(Guid documentId);

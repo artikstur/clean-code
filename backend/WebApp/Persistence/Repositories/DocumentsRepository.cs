@@ -28,6 +28,7 @@ public class DocumentsRepository : IDocumentsRepository
             AuthorId = userId,
             Author = userEntity!,
             AllowedToEditUsers = new List<UserEntity>(),
+            AllowedToReadUsers = new List<UserEntity>(),
             Name = name,
             LastModifiedAt = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow,
@@ -35,7 +36,7 @@ public class DocumentsRepository : IDocumentsRepository
 
         documentEntity.AllowedToEditUsers.Add(userEntity);
         documentEntity.AllowedToReadUsers.Add(userEntity);
-        
+
         await _dbContext.Documents.AddAsync(documentEntity);
         await _dbContext.SaveChangesAsync();
 
@@ -72,6 +73,17 @@ public class DocumentsRepository : IDocumentsRepository
         await _dbContext.SaveChangesAsync();
 
         return Result<string>.Success(documentEntity!.Name);
+    }
+
+    public async Task<Result<ICollection<Document>>> GetUserDocuments(Guid userId)
+    {
+        var documentEntities = await _dbContext.Documents
+            .Where(d => d.AuthorId == userId)
+            .Select(d => Document.Create(d.DocumentId, d.AuthorId, 
+                d.Name, d.CreatedAt, d.LastModifiedAt))
+            .ToListAsync();
+
+        return Result<ICollection<Document>>.Success(documentEntities);
     }
 
     public async Task<Result<ICollection<User>>> GetAllEditors(Guid documentId)
@@ -176,10 +188,10 @@ public class DocumentsRepository : IDocumentsRepository
         {
             return Result.Failure(new Error("Недостаточно прав", ErrorType.AuthorizationError));
         }
-        
+
         documentEntity.AllowedToEditUsers.Remove(userEntity!);
         documentEntity.AllowedToReadUsers.Remove(userEntity!);
-        
+
         await _dbContext.SaveChangesAsync();
         return Result.Success();
     }

@@ -3,7 +3,6 @@ using Application.Interfaces.Services;
 using Application.Services;
 using Application.Utils;
 using FluentValidation;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -68,19 +67,5 @@ public class UsersController : ControllerBase
         return !userResult.IsSuccess
             ? _errorResponseFactory.CreateResponse(userResult.Error)
             : Ok(Envelope.Ok(userResult.Value));
-    }
-
-    [Authorize]
-    [HttpGet("/test-authentication")]
-    public Task<IActionResult> TestAuthentication()
-    {
-        return Task.FromResult<IActionResult>(Ok(Envelope.Ok()));
-    }
-
-    [Authorize(Policy = "RequireAdmin")]
-    [HttpGet("/test-admin")]
-    public Task<IActionResult> TestAdmin()
-    {
-        return Task.FromResult<IActionResult>(Ok(Envelope.Ok()));
     }
 }

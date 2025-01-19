@@ -110,6 +110,11 @@ public class DocumentsService : IDocumentsService
             : Result<Document>.Failure(documentResult.Error);
     }
 
+    public async Task<Result<ICollection<Document>>> GetUserDocuments(Guid userId)
+    {
+        return await _documentsRepository.GetUserDocuments(userId);
+    }
+
     public async Task<Result<DocumentRole>> GetUserRole(Guid documentId, Guid userId)
     {
         var userRoleResult = await _documentsRepository.GetUserRole(documentId, userId);

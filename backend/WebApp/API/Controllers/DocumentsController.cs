@@ -5,10 +5,12 @@ using Application.Services;
 using Application.Utils;
 using Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class DocumentsController : ControllerBase
 {
@@ -37,15 +39,13 @@ public class DocumentsController : ControllerBase
             ? _errorResponseFactory.CreateResponse(createResult.Error)
             : Ok(Envelope.Ok());
     }
-    
+
     [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
     [ServiceFilter(typeof(ValidateDocumentAuthorFilter))]
     [HttpPut("{documentId:guid}/rename")]
     public async Task<IActionResult> RenameDocument(Guid documentId, [FromQuery] string newName)
     {
-        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
-        
         var renameResult = await _documentsService.Rename(documentId, newName);
 
         return !renameResult.IsSuccess
@@ -77,6 +77,19 @@ public class DocumentsController : ControllerBase
         return !deleteResult.IsSuccess
             ? _errorResponseFactory.CreateResponse(deleteResult.Error)
             : Ok(Envelope.Ok());
+    }
+
+    [ServiceFilter(typeof(UserExistsFilter))]
+    [HttpGet("user-documents")]
+    public async Task<IActionResult> GetUserDocuments()
+    {
+        var userIdClaim = User.FindFirst(CustomClaims.UserId)?.Value;
+
+        var getUserDocumentsResult = await _documentsService.GetUserDocuments(Guid.Parse(userIdClaim!));
+
+        return !getUserDocumentsResult.IsSuccess
+            ? _errorResponseFactory.CreateResponse(getUserDocumentsResult.Error)
+            : Ok(Envelope.Ok(getUserDocumentsResult.Value));
     }
 
     [ServiceFilter(typeof(UserExistsFilter))]

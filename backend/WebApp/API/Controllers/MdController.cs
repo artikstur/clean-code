@@ -24,7 +24,7 @@ public class MdController : ControllerBase
 
     [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
-    // [ServiceFilter(typeof(ValidateDocumentEditorsFilter))]
+    [ServiceFilter(typeof(ValidateDocumentEditorsFilter))]
     [HttpPost("push")]
     public async Task<IActionResult> Push([FromBody] MdPushRequest request)
     {
@@ -37,7 +37,7 @@ public class MdController : ControllerBase
 
     [ServiceFilter(typeof(UserExistsFilter))]
     [ServiceFilter(typeof(DocumentExistsFilter))]
-    // [ServiceFilter(typeof(ValidateDocumentReadersFilter))]
+    [ServiceFilter(typeof(ValidateDocumentReadersFilter))]
     [HttpGet("pull")]
     public async Task<IActionResult> Pull([FromQuery] MdPullRequest request)
     {
